@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+  <!-- Add Leaflet Routing Machine plugin -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+  
   <style>
     html, body, #map {
       height: 100%;
@@ -61,29 +66,43 @@
     var marker = L.marker([pointOfInterest.lat, pointOfInterest.lng], {icon: poiIcon}).addTo(map);
     marker.bindPopup('<h3>' + pointOfInterest.name + '</h3><p>' + pointOfInterest.description + '</p>');
 
-    // Function to display user's location on the map with a custom icon
-    function displayUserLocation(position) {
-      var userLat = position.coords.latitude;
-      var userLng = position.coords.longitude;
-      var userMarker = L.marker([userLat, userLng], {icon: userIcon}).addTo(map);
-      userMarker.bindPopup('<h3>Your Location</h3>');
-      map.setView([userLat, userLng], 17);
-    }
+    
+// Function to display user's location on the map with a custom icon and draw a route to the point of interest
+async function displayUserLocation(position) {
+  var userLat = position.coords.latitude;
+  var userLng = position.coords.longitude;
+  var userMarker = L.marker([userLat, userLng], {icon: userIcon}).addTo(map);
+  userMarker.bindPopup('<h3>Your Location</h3>');
+  map.setView([userLat, userLng], 17);
 
-    // Function to handle location errors
-    function handleLocationError(error) {
-      console.log('Error getting user location:', error);
-    }
+  // Fetch route from OpenRouteService API
+  var apiKey = '5b3ce3597851110001cf62483555d9e0b1174a29be015c61d1333a38'; // Your OpenRouteService API key
+  var routeUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${userLng},${userLat}&end=${pointOfInterest.lng},${pointOfInterest.lat}`;
+  var response = await fetch(routeUrl);
+  var routeData = await response.json();
 
-    // Request user's location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(displayUserLocation, handleLocationError);
-    } else {
-      console.log('Geolocation is not supported by this browser.');
-    }
+  if (routeData.features && routeData.features.length > 0) {
+    // Draw route on the map
+    var coordinates = routeData.features[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+    var routeLine = L.polyline(coordinates, {color: 'red'}).addTo(map);
+  } else {
+    alert("Error: Unable to fetch route.");
+  }
+}
+// ...
+
+// Check if the browser supports the Geolocation API
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(displayUserLocation, function (error) {
+    alert("Error: Unable to retrieve your location. Please allow location access and try again.");
+  });
+} else {
+  alert("Error: Your browser does not support geolocation.");
+}
 
   </script>
 </body>
 </html>
+
 
 
