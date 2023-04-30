@@ -78,6 +78,7 @@ async function displayUserLocation(position) {
   // Fetch route from OpenRouteService API
   var apiKey = '5b3ce3597851110001cf62483555d9e0b1174a29be015c61d1333a38'; // Your OpenRouteService API key
   var routeUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${userLng},${userLat}&end=${pointOfInterest.lng},${pointOfInterest.lat}`;
+
   var response = await fetch(routeUrl);
   var routeData = await response.json();
 
